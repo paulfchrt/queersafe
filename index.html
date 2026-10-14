@@ -48,19 +48,7 @@ body:before{content:"";display:block;height:5px;background:linear-gradient(90deg
 <label class="check"><input id="consent" type="checkbox"> J’ai vérifié le contenu et je comprends que je dois envoyer ce plan moi-même.</label><div class="row"><button class="btn" type="submit">Générer le message</button><button class="btn secondary" type="reset">Effacer</button></div></form><div id="planOutput" class="result" hidden></div><div class="row" id="planActions" hidden><button class="btn secondary" id="copyPlan">Copier le message</button><button class="btn secondary" id="sharePlan">Partager…</button></div></article></section>
 <section id="checkin" class="section"><article class="card"><h3>⏰ Préparer ton check-in</h3><p>Définis quand tu comptes donner des nouvelles et prépare un message. Ce site ne peut pas t’envoyer une notification ou alerter ton contact tout seul.</p><div class="field"><label for="checkDateTime">Heure prévue</label><input id="checkDateTime" type="datetime-local"></div><div class="field"><label for="checkPerson">Personne à prévenir</label><input id="checkPerson" placeholder="Prénom / surnom"></div><div class="field"><label for="checkMethod">Moyen de contact</label><input id="checkMethod" placeholder="SMS, appel, messagerie…"></div><div class="field"><label for="checkMessage">Message à envoyer</label><textarea id="checkMessage">Je suis bien arrivé·e / tout va bien. Je te donne des nouvelles comme prévu.</textarea></div><div class="row"><button class="btn" id="copyCheck">Copier le message</button><button class="btn secondary" id="shareCheck">Partager…</button></div><p class="hint">Conseil : convenez à l’avance de ce que ton contact doit faire si tu ne réponds pas.</p></article></section>
 <section id="places" class="section"><article class="card"><h3>📍 Lieux et ressources</h3><p>Les exemples ci-dessous sont fictifs. Tu peux proposer un lieu pour examen. Il ne sera pas publié automatiquement : un lieu ne doit apparaître comme sûr qu’après vérification.</p>
-<form id="placeSubmitForm">
-<div class="field"><label for="newPlaceName">Nom du lieu</label><input id="newPlaceName" maxlength="120" required placeholder="Nom public du lieu"></div>
-<div class="grid">
-<div class="field"><label for="newPlaceCategory">Catégorie</label><select id="newPlaceCategory" required><option value="association">Association</option><option value="cafe">Café</option><option value="bar">Bar</option><option value="health">Santé</option><option value="community_center">Centre communautaire</option><option value="public_place">Lieu public</option><option value="other">Autre</option></select></div>
-<div class="field"><label for="newPlaceCity">Ville</label><input id="newPlaceCity" maxlength="100" required placeholder="Ex. Toronto"></div>
-<div class="field"><label for="newPlaceCountry">Code pays (2 lettres)</label><input id="newPlaceCountry" minlength="2" maxlength="2" required value="CA" placeholder="CA"></div>
-<div class="field"><label for="newPlaceAddress">Adresse (facultatif)</label><input id="newPlaceAddress" maxlength="250" placeholder="Adresse publique du lieu"></div>
-</div>
-<div class="field"><label for="newPlaceDescription">Description / informations utiles</label><textarea id="newPlaceDescription" maxlength="1200" placeholder="Pourquoi proposer ce lieu ? Décris uniquement des informations utiles et vérifiables."></textarea></div>
-<label class="check"><input id="placeSubmitConsent" type="checkbox" required> Je comprends que cette proposition reste privée/en attente et ne sera pas considérée comme un lieu vérifié.</label>
-<div class="row"><button class="btn" type="submit">Soumettre pour vérification</button></div>
-<p id="placeSubmitStatus" class="result" role="status" aria-live="polite">Connecte-toi pour proposer un lieu.</p>
-</form>
+<p>Les lieux affichés ici sont des exemples fictifs. Dans cette version, seuls les administrateurs de QueerSafe pourront ajouter ou valider des lieux. Aucun lieu n’est présenté comme réellement vérifié.</p>
 <div class="grid"><div class="card"><span class="tag">Exemple fictif</span><h3>Café communautaire</h3><p>Exemple d’un lieu public où retrouver un ami. Adresse non réelle.</p></div><div class="card"><span class="tag">Exemple fictif</span><h3>Centre de soutien</h3><p>Exemple de ressource LGBTQ+. Coordonnées non réelles.</p></div><div class="card"><span class="tag">À vérifier</span><h3>Lieu sûr près de toi</h3><p>Demande à une association locale de confiance de confirmer les horaires, l’accessibilité et les conditions d’accueil.</p></div></div></article></section>
 <section id="help" class="section"><div class="card"><h3>Avant une rencontre</h3><ul><li>Privilégie un lieu public pour un premier rendez-vous.</li><li>Organise ton propre moyen de transport et garde ton téléphone chargé.</li><li>Envoie ton plan à quelqu’un en qui tu as confiance.</li><li>Tu peux partir à tout moment, même sans justification.</li><li>Évite de partager ton adresse personnelle ou des informations sensibles trop tôt.</li></ul></div><div class="card"><h3>Si tu te sens en danger</h3><p>Éloigne-toi si tu peux le faire sans augmenter le risque, rejoins un lieu fréquenté et contacte une personne de confiance. En cas de danger immédiat, appelle le numéro d’urgence local. Au Canada et aux États-Unis, le 911 est le numéro d’urgence.</p><p>Pour un soutien LGBTQ+, privilégie les associations reconnues de ta région. Vérifie les coordonnées sur leur site officiel avant de te déplacer.</p></div><div class="card"><h3>Confidentialité</h3><p>Ne publie pas d’accusations nominatives ni d’informations permettant d’identifier quelqu’un sans procédure fiable et protections adaptées. Une future fonction de signalement devra inclure modération, consentement, sécurité et mécanisme de correction.</p></div></section>
 <footer class="footer">QueerSafe est un prototype indépendant. Il ne vérifie pas les lieux, ne collecte pas de signalements, ne suit pas ta position et ne contacte pas les secours. N’utilise pas cette version comme système d’alerte d’urgence.</footer>
@@ -110,22 +98,5 @@ signIn.addEventListener('click',async()=>{const c=credentials();if(!c)return;sta
 signUp.addEventListener('click',async()=>{const c=credentials();if(!c)return;status('Création du compte…');const {data,error}=await supabase.auth.signUp({...c,options:{emailRedirectTo:location.origin+location.pathname}});if(error){status('Inscription impossible : '+error.message);return;}status(data.session?'Compte créé et connecté.':'Compte créé. Vérifie ta boîte e-mail pour confirmer ton adresse avant de te connecter.');});
 signOut.addEventListener('click',async()=>{const {error}=await supabase.auth.signOut();status(error?'Déconnexion impossible : '+error.message:'Tu es déconnecté·e.');});
 supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signIn.hidden=!!session;signUp.hidden=!!session;if(session)status('Connecté·e avec '+session.user.email+'.');});
-const placeForm=document.getElementById('placeSubmitForm');
-const placeStatus=document.getElementById('placeSubmitStatus');
-placeForm.addEventListener('submit',async(e)=>{
- e.preventDefault();
- const {data:{session},error:sessionError}=await supabase.auth.getSession();
- if(sessionError||!session){placeStatus.textContent='Connecte-toi avant de soumettre un lieu.';showTab('account');return;}
- const val=id=>document.getElementById(id).value.trim();
- if(!document.getElementById('placeSubmitConsent').checked){placeStatus.textContent='Confirme que tu comprends que le lieu doit être vérifié.';return;}
- placeStatus.textContent='Envoi de la proposition…';
- const user=session.user;
- const {error:profileError}=await supabase.from('profiles').upsert({id:user.id,display_name:'Membre QueerSafe'},{onConflict:'id'});
- if(profileError){placeStatus.textContent='Impossible de préparer ton profil : '+profileError.message;return;}
- const payload={name:val('newPlaceName'),category:val('newPlaceCategory'),city:val('newPlaceCity'),country_code:val('newPlaceCountry').toUpperCase(),address:val('newPlaceAddress')||null,description:val('newPlaceDescription'),submitted_by:user.id,status:'pending',verified:false,verified_by:null,verified_at:null};
- const {error}=await supabase.from('safe_places').insert(payload);
- if(error){placeStatus.textContent='Envoi impossible : '+error.message;return;}
- placeStatus.textContent='Proposition envoyée. Elle reste en attente de vérification et ne sera pas affichée comme lieu sûr avant validation.';
- placeForm.reset();document.getElementById('newPlaceCountry').value='CA';
-});
+
 </script>\n</body></html>
