@@ -99,4 +99,5 @@ signUp.addEventListener('click',async()=>{const c=credentials();if(!c)return;sta
 signOut.addEventListener('click',async()=>{const {error}=await supabase.auth.signOut();status(error?'Déconnexion impossible : '+error.message:'Tu es déconnecté·e.');});
 supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signIn.hidden=!!session;signUp.hidden=!!session;if(session)status('Connecté·e avec '+session.user.email+'.');});
 
-</script>\n</body></html>
+</script>
+</body></html>
