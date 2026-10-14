@@ -451,7 +451,10 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
      if(!response.ok)throw new Error('service indisponible');
      var results=await response.json();if(!results.length){setStatus('Adresse introuvable. Essaie avec la ville et le pays.');return;}
      var r=results[0],fullAddress=r.display_name||address,point={name:name||fullAddress,address:fullAddress,lat:Number(r.lat),lon:Number(r.lon)};
-     addPoint(point.name,point.address,point.lat,point.lon);selectPoint(allMarkers[allMarkers.length-1]);
+     addPoint(point.name,point.address,point.lat,point.lon);
+     map.setView([point.lat,point.lon],13);
+     setTimeout(function(){exploreOsmArea();},900);
+     setStatus('Ville localisée. Recherche maintenant les lieux LGBTQ+ cartographiés à proximité…');
    }catch(e){setStatus('Recherche impossible pour le moment. Réessaie ou ouvre la destination dans Google Maps.');}
  }
  function initMap(){
