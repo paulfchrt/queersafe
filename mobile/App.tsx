@@ -57,9 +57,9 @@ export default function App() {
     if(busy) return;
     setBusy(true);
     try {
-      const locationLine=await getLocationLine();
-      const message='SOS QUEERSAFE — J’ai besoin d’aide. Si tu peux, appelle-moi ou contacte les secours.\n'+locationLine;
       if(kind==='sms') {
+        const locationLine=await getLocationLine();
+        const message='SOS QUEERSAFE — J’ai besoin d’aide. Si tu peux, appelle-moi ou contacte les secours.\n'+locationLine;
         const phone=contact?.phone;
         if(!phone){Alert.alert('Aucun contact enregistré','Ajoute d’abord une personne de confiance dans Profil.');return;}
         const url=Platform.OS==='ios' ? 'sms:'+encodeURIComponent(phone)+'&body='+encodeURIComponent(message) : 'sms:'+encodeURIComponent(phone)+'?body='+encodeURIComponent(message);
