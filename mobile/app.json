@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "QueerSafe",
+    "slug": "queersafe",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "queersafe",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "QueerSafe utilise ta position uniquement lorsque tu demandes à la partager dans un message SOS.",
+        "NSContactsUsageDescription": "QueerSafe peut lire tes contacts uniquement si tu choisis d'en sélectionner un comme contact de confiance."
+      }
+    },
+    "android": {
+      "package": "app.queersafe.mobile",
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "READ_CONTACTS"]
+    },
+    "plugins": [
+      ["expo-location", {"locationWhenInUsePermission": "Autoriser QueerSafe à ajouter ta position à un SOS lorsque tu le demandes."}],
+      ["expo-contacts", {"contactsPermission": "Autoriser QueerSafe à sélectionner un contact d'urgence si tu le demandes."}],
+      "expo-secure-store"
+    ]
+  }
+}
