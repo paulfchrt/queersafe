@@ -42,6 +42,15 @@ body:before{content:"";display:block;height:5px;background:linear-gradient(90deg
 .map-card-button{cursor:pointer;margin:0 5px 5px 0}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel);color:var(--text)}
 @media(max-width:480px){#safeMap{height:330px}.map-tools{grid-template-columns:1fr}}
+
+/* Carte : repères visibles, lisibles et regroupés à petite échelle */
+#safeMap{height:470px;background:#e9edf2}
+.qs-pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#b83d83;border:3px solid #fff;box-shadow:0 2px 9px #211d2766;display:flex;align-items:center;justify-content:center}
+.qs-pin span{transform:rotate(45deg);font-size:14px;line-height:1;color:#fff}
+.qs-cluster{background:#7354b5;color:#fff;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 9px #211d2766;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-weight:800}
+.leaflet-popup-content{min-width:190px;line-height:1.45}
+.leaflet-popup-content a{display:inline-block;margin:5px 5px 0 0}
+@media(max-width:480px){#safeMap{height:400px}}
 </style><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/></head>
 <body><main class="wrap">
 <header class="brand"><img class="logo" src="./assets/queersafe-logo.svg" alt="Logo QueerSafe : bouclier Pride et cœur" width="46" height="46"><div><h1>QueerSafe</h1><p>Des rencontres plus sûres, ensemble.</p></div></header>
@@ -148,59 +157,89 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
 </script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"><link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <script>
 (function(){
- var map, marker, selectedAddress='';
+ var map,selectedAddress='',allMarkers=[],clusterGroup,selectedMarker;
  function setStatus(s){var el=document.getElementById('mapStatus');if(el)el.textContent=s;}
- function safeUrl(base,address){return base+encodeURIComponent(address);}
- function showSelection(name,address,lat,lon){
-   selectedAddress=address;
-   if(marker)marker.remove();
-   marker=L.marker([lat,lon]).addTo(map).bindPopup('<strong>'+String(name).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];})+'</strong><br>'+String(address).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];})).openPopup();
-   map.setView([lat,lon],16);
-   document.getElementById('mapPlaceName').textContent=name;
+ function esc(s){return String(s||'').replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];});}
+ function setRouteLinks(address){
    document.getElementById('mapPlaceAddress').textContent=address;
    document.getElementById('mapSelected').hidden=false;
    document.getElementById('googleRoute').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(address);
    document.getElementById('appleRoute').href='https://maps.apple.com/?daddr='+encodeURIComponent(address);
-   setStatus('Lieu affiché sur la carte. Vérifie l’adresse et les horaires auprès de la source officielle avant de partir.');
+ }
+ function selectPoint(point){
+   selectedAddress=point.address;
+   document.getElementById('mapPlaceName').textContent=point.name;
+   setRouteLinks(point.address);
+   setStatus('Lieu sélectionné : '+point.name+'. Vérifie les coordonnées et les horaires auprès de la source officielle avant de partir.');
+   if(point.marker){point.marker.openPopup();map.flyTo(point.marker.getLatLng(),16,{duration:.7});}
+ }
+ function markerIcon(){return L.divIcon({className:'',html:'<div class="qs-pin"><span>♥</span></div>',iconSize:[30,36],iconAnchor:[15,34],popupAnchor:[0,-30]});}
+ function addPoint(name,address,lat,lon){
+   var point={name:name,address:address,lat:lat,lon:lon};
+   var popup='<strong>'+esc(name)+'</strong><br><span>'+esc(address)+'</span><br><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(address)+'">Google Maps ↗</a><a target="_blank" rel="noopener noreferrer" href="https://maps.apple.com/?daddr='+encodeURIComponent(address)+'">Plans ↗</a>';
+   point.marker=L.marker([lat,lon],{icon:markerIcon(),title:name,alt:name}).bindPopup(popup);
+   point.marker.on('click',function(){selectPoint(point);});
+   clusterGroup.addLayer(point.marker);allMarkers.push(point);
+ }
+ async function geocodePoint(name,address){
+   try{
+     var response=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='+encodeURIComponent(address),{headers:{'Accept':'application/json'}});
+     if(!response.ok)return false;
+     var results=await response.json();if(!results.length)return false;
+     addPoint(name,address,Number(results[0].lat),Number(results[0].lon));return true;
+   }catch(e){return false;}
+ }
+ function delay(ms){return new Promise(function(resolve){setTimeout(resolve,ms);});}
+ async function loadSavedAddresses(){
+   var cards=Array.from(document.querySelectorAll('#places .grid .card'));
+   var places=cards.map(function(card){
+     var h=card.querySelector('h3'), p=Array.from(card.querySelectorAll('p')).find(function(x){return /^Adresse\s*:/i.test(x.textContent.trim());});
+     if(!h||!p)return null;
+     var address=p.textContent.replace(/^Adresse\s*:\s*/i,'').trim();
+     return address?{name:h.textContent.trim(),address:address}:null;
+   }).filter(Boolean);
+   var added=0;
+   setStatus('Chargement des points sur la carte…');
+   for(var i=0;i<places.length;i++){
+     var ok=await geocodePoint(places[i].name,places[i].address);if(ok)added++;
+     if(i<places.length-1)await delay(1100);
+   }
+   if(added){
+     if(allMarkers.length>1)map.fitBounds(clusterGroup.getBounds().pad(.12),{maxZoom:5});
+     else if(allMarkers.length===1)map.setView(clusterGroup.getBounds().getCenter(),14);
+     setStatus(added+' lieux avec adresse affichés directement sur la carte. Les points sont regroupés quand on dézoome. Les fiches sans adresse ne sont pas épinglées.');
+   }else setStatus('Aucun point n’a pu être chargé. Réessaie plus tard ou utilise la recherche d’adresse.');
  }
  async function locateAddress(address,name){
    if(!address.trim()){setStatus('Saisis une adresse.');return;}
    setStatus('Recherche de l’adresse…');
    try{
-     var url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='+encodeURIComponent(address);
-     var response=await fetch(url,{headers:{'Accept':'application/json'}});
+     var response=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='+encodeURIComponent(address),{headers:{'Accept':'application/json'}});
      if(!response.ok)throw new Error('service indisponible');
-     var results=await response.json();
-     if(!results.length){setStatus('Adresse introuvable. Essaie avec la ville et le pays.');return;}
-     var r=results[0], fullAddress=r.display_name||address;
-     showSelection(name||fullAddress,fullAddress,Number(r.lat),Number(r.lon));
-   }catch(e){setStatus('Recherche impossible pour le moment. Réessaie ou ouvre l’adresse dans Google Maps.');}
+     var results=await response.json();if(!results.length){setStatus('Adresse introuvable. Essaie avec la ville et le pays.');return;}
+     var r=results[0],fullAddress=r.display_name||address,point={name:name||fullAddress,address:fullAddress,lat:Number(r.lat),lon:Number(r.lon)};
+     addPoint(point.name,point.address,point.lat,point.lon);selectPoint(allMarkers[allMarkers.length-1]);
+   }catch(e){setStatus('Recherche impossible pour le moment. Réessaie ou ouvre la destination dans Google Maps.');}
  }
  function initMap(){
-   var el=document.getElementById('safeMap');
-   if(!el||!window.L||map)return;
-   map=L.map(el,{scrollWheelZoom:false}).setView([43.70,-79.39],12);
+   var el=document.getElementById('safeMap');if(!el||!window.L||map)return;
+   map=L.map(el,{scrollWheelZoom:true}).setView([43.70,-79.39],4);
    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
+   clusterGroup=L.markerClusterGroup({showCoverageOnHover:false,spiderfyOnMaxZoom:true,zoomToBoundsOnClick:true,iconCreateFunction:function(cluster){return L.divIcon({html:'<div class="qs-cluster">'+cluster.getChildCount()+'</div>',className:'',iconSize:[38,38]});}});
+   map.addLayer(clusterGroup);
    document.getElementById('mapSearchBtn').addEventListener('click',function(){locateAddress(document.getElementById('mapSearch').value,'Adresse recherchée');});
    document.getElementById('mapSearch').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();locateAddress(this.value,'Adresse recherchée');}});
-   document.querySelectorAll('#places .grid .card').forEach(function(card){
-     var h=card.querySelector('h3'), p=Array.from(card.querySelectorAll('p')).find(function(x){return x.textContent.indexOf('Adresse :')>=0;});
-     if(!h||!p)return;
-     var address=p.textContent.replace(/^.*Adresse\s*:\s*/,'').trim();
-     if(!address)return;
-     var btn=document.createElement('button');btn.type='button';btn.className='map-card-button';btn.textContent='Afficher sur la carte';
-     btn.addEventListener('click',function(){showTab('places');document.getElementById('interactiveMapCard').scrollIntoView({behavior:'smooth',block:'start'});document.getElementById('mapSearch').value=address;locateAddress(address,h.textContent);});
-     p.appendChild(document.createTextNode(' '));p.appendChild(btn);
-   });
+   loadSavedAddresses();
  }
  document.addEventListener('DOMContentLoaded',function(){
    initMap();
-   document.querySelectorAll('[data-tab="places"],[data-action="tab-places"]').forEach(function(b){b.addEventListener('click',function(){setTimeout(function(){initMap();if(map)map.invalidateSize();},120);});});
-   document.querySelectorAll('[data-tab]').forEach(function(b){b.addEventListener('click',function(){if(b.getAttribute('data-tab')==='places')setTimeout(function(){if(map)map.invalidateSize();},150);});});
+   document.querySelectorAll('[data-tab]').forEach(function(b){b.addEventListener('click',function(){if(b.getAttribute('data-tab')==='places')setTimeout(function(){initMap();if(map)map.invalidateSize();},150);});});
  });
  window.queerSafeLocateAddress=locateAddress;
 })();
-</script>
+</script>t>
 </body></html>
