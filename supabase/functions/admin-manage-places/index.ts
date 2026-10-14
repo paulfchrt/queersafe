@@ -38,6 +38,19 @@ Deno.serve(async (req: Request) => {
     return response(403, { error: "Admin access required." });
   }
 
+  // safe_places.submitted_by and verified_by reference public.profiles(id).
+  // Create a minimal profile for an authorized admin if signup did not create one.
+  const { data: existingProfile, error: profileLookupError } = await admin
+    .from("profiles").select("id").eq("id", user.id).maybeSingle();
+  if (profileLookupError) return response(500, { error: "Could not verify admin profile." });
+  if (!existingProfile) {
+    const { error: profileInsertError } = await admin.from("profiles").insert({
+      id: user.id,
+      display_name: "Administrateur QueerSafe",
+    });
+    if (profileInsertError) return response(500, { error: "Could not initialize admin profile." });
+  }
+
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return response(400, { error: "Invalid JSON." }); }
   const action = body.action;
