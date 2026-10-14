@@ -89,6 +89,7 @@ body:before{content:"";display:block;height:5px;background:linear-gradient(90deg
 <h3>🗺️ Carte interactive des lieux</h3>
 <p>Zoome, déplace la carte et sélectionne un lieu. Tu peux rechercher une adresse, puis ouvrir l’itinéraire dans Google Maps ou Plans d’Apple. La carte utilise OpenStreetMap ; les liens d’itinéraire ouvrent l’application choisie.</p>
 <div class="map-tools"><input id="mapSearch" type="search" placeholder="Rechercher une adresse ou un lieu" aria-label="Rechercher une adresse ou un lieu"><button class="btn" id="mapSearchBtn" type="button">Rechercher</button></div>
+<div class="row"><button class="btn secondary" id="mapExploreBtn" type="button">Explorer les lieux LGBTQ+ dans cette zone</button></div>
 <div id="safeMap" role="application" aria-label="Carte interactive des ressources LGBTQ+"></div>
 <p class="map-status" id="mapStatus" role="status" aria-live="polite">Carte prête. Sélectionne « Afficher sur la carte » sur une fiche ou recherche une adresse.</p>
 <div id="mapSelected" hidden>
@@ -357,7 +358,7 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"><link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <script>
 (function(){
- var map,selectedAddress='',allMarkers=[],clusterGroup,selectedMarker;
+ var map,selectedAddress='',allMarkers=[],clusterGroup,selectedMarker,osmLoaded={},osmLoading=false;
  function setStatus(s){var el=document.getElementById('mapStatus');if(el)el.textContent=s;}
  function esc(s){return String(s||'').replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];});}
  function setRouteLinks(address){
@@ -374,9 +375,9 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
    if(point.marker){point.marker.openPopup();map.flyTo(point.marker.getLatLng(),16,{duration:.7});}
  }
  function markerIcon(){return L.divIcon({className:'',html:'<div class="qs-pin"><span>♥</span></div>',iconSize:[30,36],iconAnchor:[15,34],popupAnchor:[0,-30]});}
- function addPoint(name,address,lat,lon){
-   var point={name:name,address:address,lat:lat,lon:lon};
-   var popup='<strong>'+esc(name)+'</strong><br><span>'+esc(address)+'</span><br><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(address)+'">Google Maps ↗</a><a target="_blank" rel="noopener noreferrer" href="https://maps.apple.com/?daddr='+encodeURIComponent(address)+'">Plans ↗</a>';
+ function addPoint(name,address,lat,lon,description,sourceKey){
+   var point={name:name,address:address,lat:lat,lon:lon,description:description||'',sourceKey:sourceKey||''};
+   var popup='<strong>'+esc(name)+'</strong><br><span>'+esc(address)+'</span>'+(point.description?'<br><span>'+esc(point.description)+'</span>':'')+'<br><small>Source : OpenStreetMap</small><br><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(address)+'">Google Maps ↗</a><a target="_blank" rel="noopener noreferrer" href="https://maps.apple.com/?daddr='+encodeURIComponent(address)+'">Plans ↗</a>';
    point.marker=L.marker([lat,lon],{icon:markerIcon(),title:name,alt:name}).bindPopup(popup);
    point.marker.on('click',function(){selectPoint(point);});
    clusterGroup.addLayer(point.marker);allMarkers.push(point);
@@ -413,6 +414,35 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
      setStatus('Terminé : '+added+' lieux affichés sur la carte'+(failed?' ; '+failed+' adresses n’ont pas pu être géolocalisées':'')+'. Les points sont regroupés quand on dézoome. Les fiches sans adresse ne sont pas épinglées.');
    }else setStatus('Aucun point n’a pu être géolocalisé. Le service de recherche peut limiter les requêtes : réessaie plus tard.');
  }
+ async function exploreOsmArea(){
+   if(!map||osmLoading)return;
+   if(map.getZoom()<8){setStatus('Zoome sur une ville ou un quartier (niveau 8 ou plus), puis lance la recherche. Une recherche mondiale en une seule fois serait trop vaste.');return;}
+   var b=map.getBounds(),bbox=[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()].join(',');
+   if(osmLoaded[bbox]){setStatus('Cette zone a déjà été interrogée. Zoome ou déplace la carte pour explorer une autre zone.');return;}
+   osmLoading=true;setStatus('Recherche de lieux LGBTQ+ cartographiés dans cette zone…');
+   var query='[out:json][timeout:25];(nwr[~"^(name|description|lgbtq|gay|queer|lesbian|transgender|access)"~"LGBTQ|LGBT|gay|queer|lesbian|transgender|trans-friendly|homosexual|pride",i]('+bbox+'););out center tags;';
+   try{
+     var response=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','Accept':'application/json'},body:'data='+encodeURIComponent(query)});
+     if(!response.ok)throw new Error('Service temporairement indisponible');
+     var data=await response.json(),added=0,seen={};
+     (data.elements||[]).forEach(function(el){
+       var tags=el.tags||{},name=tags.name||tags.brand||tags.operator;
+       if(!name)return;
+       var lat=el.lat!==undefined?Number(el.lat):(el.center?Number(el.center.lat):NaN),lon=el.lon!==undefined?Number(el.lon):(el.center?Number(el.center.lon):NaN);
+       if(!Number.isFinite(lat)||!Number.isFinite(lon))return;
+       var key=el.type+'/'+el.id;
+       if(osmLoaded['id:'+key]||seen[key])return;
+       var address=[tags['addr:housenumber'],tags['addr:street'],tags['addr:postcode'],tags['addr:city']].filter(Boolean).join(' ');
+       if(!address)address=[tags['addr:city'],tags['addr:country']].filter(Boolean).join(', ');
+       if(!address)address=lat.toFixed(5)+', '+lon.toFixed(5);
+       var description=tags.description||tags['description:en']||tags.note||tags.amenity||tags.shop||tags.tourism||'Lieu repéré via les balises OpenStreetMap ; vérifier son positionnement LGBTQ+ et son activité auprès de la source officielle.';
+       addPoint(name,address,lat,lon,description,key);seen[key]=true;osmLoaded['id:'+key]=true;added++;
+     });
+     osmLoaded[bbox]=true;
+     setStatus(added?'Recherche terminée : '+added+' lieux supplémentaires trouvés dans cette zone via OpenStreetMap. Les données peuvent être incomplètes ; vérifie l’activité et l’accueil LGBTQ+ avant de t’y rendre.':'Aucun nouveau lieu correspondant aux balises LGBTQ+ n’a été trouvé ici. La base cartographique peut être incomplète.');
+   }catch(e){setStatus('Recherche cartographique momentanément indisponible. Réessaie plus tard ou utilise la recherche par adresse.');}
+   finally{osmLoading=false;}
+ }
  async function locateAddress(address,name){
    if(!address.trim()){setStatus('Saisis une adresse.');return;}
    setStatus('Recherche de l’adresse…');
@@ -430,6 +460,7 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
    clusterGroup=L.markerClusterGroup({showCoverageOnHover:false,spiderfyOnMaxZoom:true,zoomToBoundsOnClick:true,iconCreateFunction:function(cluster){return L.divIcon({html:'<div class="qs-cluster">'+cluster.getChildCount()+'</div>',className:'',iconSize:[38,38]});}});
    map.addLayer(clusterGroup);
+   document.getElementById('mapExploreBtn').addEventListener('click',function(){exploreOsmArea();});
    document.getElementById('mapSearchBtn').addEventListener('click',function(){locateAddress(document.getElementById('mapSearch').value,'Adresse recherchée');});
    document.getElementById('mapSearch').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();locateAddress(this.value,'Adresse recherchée');}});
    loadSavedAddresses();
