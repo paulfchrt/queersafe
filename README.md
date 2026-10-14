@@ -13,7 +13,7 @@ The native app currently includes a mobile navigation shell, meeting-plan sharin
 
 ## What is not live yet
 
-- No Supabase project is connected to the app.
+- Supabase client and email signup/login are implemented in the mobile app, but live authentication and database access still need to be tested against the configured Supabase project.
 - No community SOS is transmitted to other QueerSafe users.
 - No verified place directory has been populated.
 - No push notifications, moderation console, or server-side alert expiry are configured.
@@ -26,7 +26,7 @@ The native app currently includes a mobile navigation shell, meeting-plan sharin
 
 1. Install and type-check the native project; fix build issues.
 2. Create a Supabase project, apply the migration, and test Row Level Security.
-3. Add authentication, place submission/moderation, and privacy policy.
+3. Test email authentication and RLS; then add place submission/moderation and a privacy policy.
 4. Build an audited server-side alert workflow with expiration, abuse controls and push notifications.
 5. Run closed beta tests on iOS and Android, including offline and denied-permission cases.
 6. Prepare store metadata, legal pages and release builds.
