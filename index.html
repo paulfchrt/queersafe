@@ -34,12 +34,12 @@ body:before{content:"";display:block;height:5px;background:linear-gradient(90deg
 </style></head>
 <body><main class="wrap">
 <header class="brand"><div class="logo" aria-hidden="true">Q+</div><div><h1>QueerSafe</h1><p>Des rencontres plus sûres, ensemble.</p></div></header>
-<section class="hero"><div class="eyebrow">La sécurité, sans jugement</div><h2>Prends soin de toi. Garde le contrôle.</h2><p>Prépare une rencontre, partage un plan avec une personne de confiance et garde à portée de main des ressources utiles à la communauté LGBTQ+.</p><div class="notice"><strong>Prototype en test :</strong> les lieux de démonstration ne sont pas vérifiés. Cette page n’envoie aucune alerte automatique et ne remplace pas les services d’urgence.</div><button class="btn" onclick="showTab('plan')">Préparer une rencontre →</button></section>
+<section class="hero"><div class="eyebrow">La sécurité, sans jugement</div><h2>Prends soin de toi. Garde le contrôle.</h2><p>Prépare une rencontre, partage un plan avec une personne de confiance et garde à portée de main des ressources utiles à la communauté LGBTQ+.</p><div class="notice"><strong>Prototype en test :</strong> les lieux de démonstration ne sont pas vérifiés. Cette page n’envoie aucune alerte automatique et ne remplace pas les services d’urgence.</div><button class="btn" type="button" data-action="tab-plan">Préparer une rencontre →</button></section>
 <nav class="tabs" aria-label="Navigation"><button class="active" data-tab="home">Accueil</button><button data-tab="plan">Plan de rencontre</button><button data-tab="checkin">Check-in</button><button data-tab="places">Lieux</button><button data-tab="help">Conseils & aide</button></nav>
 <section id="home" class="section active"><div class="grid">
-<article class="card"><h3>🗓️ Prépare ton rendez-vous</h3><p>Note où tu vas, l’heure prévue et qui peut prendre de tes nouvelles.</p><button class="btn secondary" onclick="showTab('plan')">Créer mon plan</button></article>
-<article class="card"><h3>⏰ Un check-in simple</h3><p>Choisis une heure pour prévenir une personne de confiance. Le rappel ne sera pas automatique dans ce prototype.</p><button class="btn secondary" onclick="showTab('checkin')">Préparer un check-in</button></article>
-<article class="card"><h3>🤝 La communauté compte</h3><p>Partage uniquement ce que tu souhaites. Tu n’as pas à révéler ton identité ou ton orientation pour demander de l’aide.</p><button class="btn secondary" onclick="showTab('help')">Voir les conseils</button></article>
+<article class="card"><h3>🗓️ Prépare ton rendez-vous</h3><p>Note où tu vas, l’heure prévue et qui peut prendre de tes nouvelles.</p><button class="btn secondary" type="button" data-action="tab-plan">Créer mon plan</button></article>
+<article class="card"><h3>⏰ Un check-in simple</h3><p>Choisis une heure pour prévenir une personne de confiance. Le rappel ne sera pas automatique dans ce prototype.</p><button class="btn secondary" type="button" data-action="tab-checkin">Préparer un check-in</button></article>
+<article class="card"><h3>🤝 La communauté compte</h3><p>Partage uniquement ce que tu souhaites. Tu n’as pas à révéler ton identité ou ton orientation pour demander de l’aide.</p><button class="btn secondary" type="button" data-action="tab-help">Voir les conseils</button></article>
 </div></section>
 <section id="plan" class="section"><article class="card"><h3>Ton plan de rencontre</h3><p>Ces informations restent dans cette page pendant ta session. Elles ne sont pas transmises à QueerSafe.</p>
 <form id="planForm"><div class="grid"><div class="field"><label for="nickname">Pseudo de la personne (facultatif)</label><input id="nickname" autocomplete="off" placeholder="Pseudo, pas besoin du nom réel"></div><div class="field"><label for="date">Date</label><input id="date" type="date" required></div><div class="field"><label for="time">Heure prévue</label><input id="time" type="time" required></div><div class="field"><label for="place">Lieu de rendez-vous</label><input id="place" placeholder="Adresse ou lieu public" required></div><div class="field"><label for="area">Quartier / ville</label><input id="area" placeholder="Quartier, ville"></div><div class="field"><label for="checkTime">Heure de check-in</label><input id="checkTime" type="time"></div><div class="field"><label for="trusted">Personne de confiance</label><input id="trusted" placeholder="Prénom ou surnom"></div><div class="field"><label for="contact">Comment la joindre</label><input id="contact" placeholder="Téléphone / messagerie"></div></div>
@@ -50,14 +50,43 @@ body:before{content:"";display:block;height:5px;background:linear-gradient(90deg
 <section id="help" class="section"><div class="card"><h3>Avant une rencontre</h3><ul><li>Privilégie un lieu public pour un premier rendez-vous.</li><li>Organise ton propre moyen de transport et garde ton téléphone chargé.</li><li>Envoie ton plan à quelqu’un en qui tu as confiance.</li><li>Tu peux partir à tout moment, même sans justification.</li><li>Évite de partager ton adresse personnelle ou des informations sensibles trop tôt.</li></ul></div><div class="card"><h3>Si tu te sens en danger</h3><p>Éloigne-toi si tu peux le faire sans augmenter le risque, rejoins un lieu fréquenté et contacte une personne de confiance. En cas de danger immédiat, appelle le numéro d’urgence local. Au Canada et aux États-Unis, le 911 est le numéro d’urgence.</p><p>Pour un soutien LGBTQ+, privilégie les associations reconnues de ta région. Vérifie les coordonnées sur leur site officiel avant de te déplacer.</p></div><div class="card"><h3>Confidentialité</h3><p>Ne publie pas d’accusations nominatives ni d’informations permettant d’identifier quelqu’un sans procédure fiable et protections adaptées. Une future fonction de signalement devra inclure modération, consentement, sécurité et mécanisme de correction.</p></div></section>
 <footer class="footer">QueerSafe est un prototype indépendant. Il ne vérifie pas les lieux, ne collecte pas de signalements, ne suit pas ta position et ne contacte pas les secours. N’utilise pas cette version comme système d’alerte d’urgence.</footer>
 </main><script>
-function showTab(id){document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
-document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
-
-
-const $=id=>document.getElementById(id);
-$('planForm').addEventListener('submit',e=>{e.preventDefault();if(!$('consent').checked){alert('Coche la case pour confirmer que tu enverras le message toi-même.');return}const v=id=>$(id).value.trim();const lines=['QUEERSAFE · PLAN DE RENCONTRE','Date : '+v('date'),'Heure : '+v('time'),'Lieu : '+v('place),v('area')?'Quartier / ville : '+v('area'):'',v('nickname')?'Pseudo : '+v('nickname'):'',v('checkTime')?'Heure de check-in : '+v('checkTime'):'',v('trusted')?'Personne de confiance : '+v('trusted'):'',v('contact')?'Contact : '+v('contact'):'',v('codeword')?'Mot-code convenu : '+v('codeword'):'',v('exit')?'Plan de sortie : '+v('exit'):'',v('notes')?'Autres infos : '+v('notes'):'','Si je ne réponds pas à l’heure prévue, essaie de me contacter selon ce dont nous avons convenu.'];$('planOutput').textContent=lines.filter(Boolean).join('\n');$('planOutput').hidden=false;$('planActions').hidden=false});
-$('copyPlan').onclick=()=>copyText($('planOutput').textContent);$('sharePlan').onclick=()=>share($('planOutput').textContent);$('copyCheck').onclick=()=>copyText($('checkMessage').value);$('shareCheck').onclick=()=>share($('checkMessage').value);
-async function copyText(text){try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text)}else{throw new Error('clipboard unavailable')}alert('Message copié.')}catch(e){const t=document.createElement('textarea');t.value=text;t.setAttribute('readonly','');t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}t.remove();if(ok)alert('Message copié.');else alert('Copie non prise en charge ici. Sélectionne le texte puis copie-le manuellement.')} }
-async function share(text){if(navigator.share){try{await navigator.share({title:'QueerSafe',text})}catch(e){if(e&&e.name!=='AbortError')copyText(text)}}else copyText(text)}
-if('serviceWorker'in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+(function(){
+'use strict';
+function byId(id){return document.getElementById(id);}
+function showTab(id){
+ document.querySelectorAll('.section').forEach(function(s){s.classList.toggle('active',s.id===id);});
+ document.querySelectorAll('[data-tab]').forEach(function(b){b.classList.toggle('active',b.dataset.tab===id);});
+ try{window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}catch(e){window.scrollTo(0,0);}
+}
+async function copyText(text){
+ try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);alert('Message copié.');return;}}catch(e){}
+ var t=document.createElement('textarea');t.value=text;t.setAttribute('readonly','');t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();var ok=false;try{ok=document.execCommand('copy');}catch(e){}t.remove();
+ alert(ok?'Message copié.':'Copie automatique indisponible. Le message reste affiché : maintiens le doigt dessus pour le sélectionner et le copier.');
+}
+async function share(text){if(navigator.share){try{await navigator.share({title:'QueerSafe',text:text});return;}catch(e){if(e&&e.name==='AbortError')return;}}await copyText(text);}
+function init(){
+ document.addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.tab){showTab(b.dataset.tab);return;}
+  var a=b.dataset.action;
+  if(a==='tab-plan'){showTab('plan');return;}
+  if(a==='tab-checkin'){showTab('checkin');return;}
+  if(a==='tab-help'){showTab('help');return;}
+  if(b.id==='copyPlan'){var o=byId('planOutput');if(o&&!o.hidden)copyText(o.textContent);}
+  else if(b.id==='sharePlan'){var o2=byId('planOutput');if(o2&&!o2.hidden)share(o2.textContent);}
+  else if(b.id==='copyCheck')copyText(byId('checkMessage').value);
+  else if(b.id==='shareCheck')share(byId('checkMessage').value);
+ });
+ var form=byId('planForm');
+ if(form)form.addEventListener('submit',function(e){
+  e.preventDefault();
+  if(!byId('consent').checked){alert('Coche la case pour confirmer que tu enverras le message toi-même.');return;}
+  var v=function(id){return byId(id).value.trim();};
+  var lines=['QUEERSAFE · PLAN DE RENCONTRE','Date : '+v('date'),'Heure : '+v('time'),'Lieu : '+v('place),v('area')?'Quartier / ville : '+v('area'):'',v('nickname')?'Pseudo : '+v('nickname'):'',v('checkTime')?'Heure de check-in : '+v('checkTime'):'',v('trusted')?'Personne de confiance : '+v('trusted'):'',v('contact')?'Contact : '+v('contact'):'',v('codeword')?'Mot-code convenu : '+v('codeword'):'',v('exit')?'Plan de sortie : '+v('exit'):'',v('notes')?'Autres infos : '+v('notes'):'','Si je ne réponds pas à l’heure prévue, essaie de me contacter selon ce dont nous avons convenu.'];
+  byId('planOutput').textContent=lines.filter(Boolean).join('\n');byId('planOutput').hidden=false;byId('planActions').hidden=false;
+ });
+ if('serviceWorker'in navigator&&location.protocol.indexOf('http')===0)window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){});});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
 </script></body></html>
