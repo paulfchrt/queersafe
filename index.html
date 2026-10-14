@@ -72,8 +72,9 @@ body:before{content:"";display:block;height:5px;background:linear-gradient(90deg
 <body><main class="wrap">
 <header class="brand"><img class="logo" src="./assets/queersafe-logo.svg" alt="Logo QueerSafe : bouclier Pride et cœur" width="46" height="46"><div><h1>QueerSafe</h1><p>Des rencontres plus sûres, ensemble.</p></div></header>
 <section class="hero"><div class="eyebrow">La sécurité, sans jugement</div><h2>Prends soin de toi. Garde le contrôle.</h2><p>Prépare une rencontre, partage un plan avec une personne de confiance et garde à portée de main des ressources utiles à la communauté LGBTQ+.</p><div class="notice"><strong>Prototype en test :</strong> les lieux de démonstration ne sont pas vérifiés. Cette page n’envoie aucune alerte automatique et ne remplace pas les services d’urgence.</div><button class="btn" type="button" data-action="tab-plan">Préparer une rencontre →</button></section>
-<nav class="tabs" aria-label="Navigation"><button class="active" data-tab="home">Accueil</button><button data-tab="account">Connexion</button><button data-tab="plan">Plan de rencontre</button><button data-tab="checkin">Check-in</button><button data-tab="places">Lieux</button><button data-tab="help">Conseils & aide</button></nav>
+<nav class="tabs" aria-label="Navigation"><button class="active" data-tab="home">Accueil</button><button data-tab="account">Connexion</button><button data-tab="plan">Plan de rencontre</button><button data-tab="checkin">Check-in</button><button data-tab="places">Lieux</button><button data-tab="help">Conseils & aide</button><button data-tab="settings">Paramètres</button></nav>
 <section id="account" class="section"><article class="card"><h3>Compte QueerSafe</h3><p>Crée un compte ou connecte-toi. Utilise une adresse e-mail à laquelle tu as accès. Ne partage jamais ton mot de passe.</p><div class="field"><label for="authEmail">Adresse e-mail</label><input id="authEmail" type="email" autocomplete="email" required placeholder="toi@exemple.com"></div><div class="field"><label for="authPassword">Mot de passe</label><input id="authPassword" type="password" autocomplete="current-password" minlength="8" required placeholder="8 caractères minimum"></div><div class="row"><button class="btn" id="signInBtn" type="button">Se connecter</button><button class="btn secondary" id="signUpBtn" type="button">Créer un compte</button><button class="btn secondary" id="signOutBtn" type="button" hidden>Se déconnecter</button></div><p id="authStatus" class="result" role="status" aria-live="polite">Connexion non vérifiée.</p><p class="hint">La confirmation par e-mail peut être requise selon les paramètres Supabase. Cette fonction ne signifie pas que les alertes communautaires sont activées.</p></article></section>
+<section id="settings" class="section"><article class="card"><h3>⚙️ Paramètres de sécurité</h3><p>Enregistre à l’avance les personnes à prévenir en cas de besoin. Elles seront déjà disponibles depuis le bouton SOS, sans devoir remplir leurs coordonnées dans l’urgence.</p><div class="notice"><strong>Confidentialité :</strong> pour le moment, ces contacts sont enregistrés dans le navigateur de cet appareil. Ils ne sont pas synchronisés avec ton compte QueerSafe et peuvent disparaître si les données du navigateur sont effacées.</div><h3>Mes contacts SOS</h3><div id="settingsSosContactsList"></div><h3>Ajouter un contact de confiance</h3><div class="field"><label for="settingsSosContactName">Nom ou surnom</label><input id="settingsSosContactName" type="text" maxlength="60" autocomplete="name" placeholder="Ex. Maman, Alex…"></div><div class="field"><label for="settingsSosContactPhone">Numéro de téléphone</label><input id="settingsSosContactPhone" type="tel" maxlength="30" autocomplete="tel" placeholder="+1 416 555 0123"></div><div class="row"><button class="btn" type="button" id="settingsSosAddContact">Enregistrer le contact</button></div><p id="settingsSosStatus" class="result" role="status" aria-live="polite" hidden></p><p class="hint">Ajoute et vérifie tes contacts maintenant, idéalement avec leur accord. Le bouton SOS servira ensuite à les joindre rapidement.</p></article></section>
 <section id="home" class="section active"><div class="grid">
 <article class="card"><h3>🗓️ Prépare ton rendez-vous</h3><p>Note où tu vas, l’heure prévue et qui peut prendre de tes nouvelles.</p><button class="btn secondary" type="button" data-action="tab-plan">Créer mon plan</button></article>
 <article class="card"><h3>⏰ Un check-in simple</h3><p>Choisis une heure pour prévenir une personne de confiance. Le rappel ne sera pas automatique dans ce prototype.</p><button class="btn secondary" type="button" data-action="tab-checkin">Préparer un check-in</button></article>
@@ -166,14 +167,11 @@ body:before{content:"";display:block;height:5px;background:linear-gradient(90deg
 <div class="sos-overlay" id="sosDialog" hidden>
  <section class="sos-panel" role="dialog" aria-modal="true" aria-labelledby="sosTitle">
   <div class="sos-head"><h2 id="sosTitle">Alerter mes proches</h2><button type="button" class="sos-close" id="sosClose" aria-label="Fermer le panneau SOS">Fermer ✕</button></div>
-  <p>Enregistre les personnes que tu veux prévenir en priorité. Quand tu appuies sur « Envoyer un SMS », ton application Messages s’ouvre avec un texte prérempli : tu gardes la main sur l’envoi.</p>
+  <p>Les personnes que tu as enregistrées dans Paramètres apparaissent ici. En cas de besoin, tu peux préparer un SMS avec ta position actuelle ou appeler directement un proche.</p>
   <div class="notice"><strong>Important :</strong> QueerSafe n’envoie pas de message en arrière-plan et ne contacte personne automatiquement. Les contacts sont enregistrés uniquement sur cet appareil dans ce navigateur.</div>
   <h3>Mes contacts de confiance</h3>
   <div id="sosContactsList"><p class="hint">Aucun contact enregistré pour le moment.</p></div>
-  <h3>Ajouter un proche</h3>
-  <div class="field"><label for="sosContactName">Nom ou surnom</label><input id="sosContactName" type="text" maxlength="60" autocomplete="off" placeholder="Ex. Maman, Alex…"></div>
-  <div class="field"><label for="sosContactPhone">Numéro de téléphone</label><input id="sosContactPhone" type="tel" maxlength="30" autocomplete="tel" placeholder="+1 416 555 0123"></div>
-  <div class="sos-actions"><button class="btn" type="button" id="sosAddContact">Enregistrer le contact</button></div>
+  <div class="sos-actions"><button class="btn secondary" type="button" id="sosManageContacts">Gérer mes contacts dans Paramètres</button></div>
   <p id="sosStatus" class="result" role="status" aria-live="polite" hidden></p>
   <p class="hint">La position n’est jamais ajoutée sans ton action. Évite d’enregistrer ces informations sur un appareil partagé ou auquel une autre personne peut accéder.</p>
   <details><summary>Besoin des secours immédiatement ?</summary><p>Au Canada et aux États-Unis, le numéro d’urgence est le 911. En France, appelle le 112 ou le service adapté à la situation. En cas de danger immédiat, utilise le numéro local.</p><a href="tel:911">Appeler le 911 (Canada / États-Unis)</a></details>
@@ -199,24 +197,46 @@ document.addEventListener('DOMContentLoaded',function(){
 
 
  var sosOpen=document.getElementById('sosOpen'),sosDialog=document.getElementById('sosDialog'),sosClose=document.getElementById('sosClose'),sosStatus=document.getElementById('sosStatus'),sosContactsList=document.getElementById('sosContactsList');
+ var settingsSosContactsList=document.getElementById('settingsSosContactsList'),settingsSosStatus=document.getElementById('settingsSosStatus');
  var sosContacts=[];
  try{sosContacts=JSON.parse(localStorage.getItem('queersafe_trusted_contacts')||'[]');if(!Array.isArray(sosContacts))sosContacts=[];}catch(e){sosContacts=[];}
- var sosMessage='J’ai besoin d’aide. Peux-tu m’appeler dès que possible ?';
+ var sosMessage='J’ai besoin d’aide. Voici ma position actuelle : ';
  function showSosStatus(message){sosStatus.textContent=message;sosStatus.hidden=false;}
- function saveSosContacts(){try{localStorage.setItem('queersafe_trusted_contacts',JSON.stringify(sosContacts));return true;}catch(e){showSosStatus('Impossible d’enregistrer les contacts dans ce navigateur. Vérifie les réglages de confidentialité ou l’espace disponible.');return false;}}
- function renderSosContacts(){
-  sosContactsList.textContent='';
-  if(!sosContacts.length){var empty=document.createElement('p');empty.className='hint';empty.textContent='Aucun contact enregistré pour le moment.';sosContactsList.appendChild(empty);return;}
-  sosContacts.forEach(function(contact,index){
-   var card=document.createElement('div');card.className='sos-contact';
-   var name=document.createElement('strong');name.textContent=contact.name;
-   var phone=document.createElement('div');phone.className='hint';phone.textContent=contact.phone;
-   var actions=document.createElement('div');actions.className='row';
-   var sms=document.createElement('a');sms.href='sms:'+contact.phone.replace(/[^+0-9]/g,'')+'?&body='+encodeURIComponent(sosMessage);sms.textContent='Envoyer un SMS';sms.setAttribute('aria-label','Préparer un SMS pour '+contact.name);
+ function showSettingsSosStatus(message){settingsSosStatus.textContent=message;settingsSosStatus.hidden=false;}
+ function saveSosContacts(){try{localStorage.setItem('queersafe_trusted_contacts',JSON.stringify(sosContacts));return true;}catch(e){showSosStatus('Impossible d’enregistrer les contacts dans ce navigateur. Vérifie les réglages de confidentialité ou l’espace disponible.');showSettingsSosStatus('Impossible d’enregistrer les contacts dans ce navigateur.');return false;}}
+ function contactCard(contact,index,settingsMode){
+  var card=document.createElement('div');card.className='sos-contact';
+  var name=document.createElement('strong');name.textContent=contact.name;
+  var phone=document.createElement('div');phone.className='hint';phone.textContent=contact.phone;
+  var actions=document.createElement('div');actions.className='row';
+  if(!settingsMode){
+   var sms=document.createElement('a');sms.href='sms:'+contact.phone.replace(/[^+0-9]/g,'')+'?&body='+encodeURIComponent('J’ai besoin d’aide. Je partage ma position actuelle : ');
+   sms.textContent='Préparer un SMS';sms.setAttribute('aria-label','Préparer un SMS pour '+contact.name);
+   var loc=document.createElement('button');loc.type='button';loc.className='btn';loc.textContent='SMS + position';loc.addEventListener('click',function(){shareLocationWithContact(contact);});
    var call=document.createElement('a');call.href='tel:'+contact.phone.replace(/[^+0-9]/g,'');call.textContent='Appeler';
-   var remove=document.createElement('button');remove.type='button';remove.className='btn secondary';remove.textContent='Supprimer';remove.addEventListener('click',function(){sosContacts.splice(index,1);if(saveSosContacts()){renderSosContacts();showSosStatus('Contact supprimé de cet appareil.');}});
-   actions.appendChild(sms);actions.appendChild(call);actions.appendChild(remove);card.appendChild(name);card.appendChild(phone);card.appendChild(actions);sosContactsList.appendChild(card);
-  });
+   actions.appendChild(loc);actions.appendChild(sms);actions.appendChild(call);
+  } else {
+   var remove=document.createElement('button');remove.type='button';remove.className='btn secondary';remove.textContent='Supprimer';remove.addEventListener('click',function(){sosContacts.splice(index,1);if(saveSosContacts()){renderSosContacts();showSettingsSosStatus('Contact supprimé de cet appareil.');}});
+   actions.appendChild(remove);
+  }
+  card.appendChild(name);card.appendChild(phone);card.appendChild(actions);return card;
+ }
+ function renderSosContacts(){
+  sosContactsList.textContent='';settingsSosContactsList.textContent='';
+  if(!sosContacts.length){var empty=document.createElement('p');empty.className='hint';empty.textContent='Aucun contact enregistré. Ajoute tes proches dans Paramètres avant d’avoir besoin du SOS.';sosContactsList.appendChild(empty);var empty2=document.createElement('p');empty2.className='hint';empty2.textContent='Aucun contact enregistré pour le moment.';settingsSosContactsList.appendChild(empty2);return;}
+  sosContacts.forEach(function(contact,index){sosContactsList.appendChild(contactCard(contact,index,false));settingsSosContactsList.appendChild(contactCard(contact,index,true));});
+ }
+ function shareLocationWithContact(contact){
+  if(!navigator.geolocation){showSosStatus('La géolocalisation n’est pas disponible sur cet appareil.');return;}
+  showSosStatus('Récupération de ta position… Autorise la localisation si le téléphone le demande.');
+  navigator.geolocation.getCurrentPosition(function(position){
+   var lat=position.coords.latitude,lon=position.coords.longitude;
+   var mapLink='https://maps.google.com/?q='+lat+','+lon;
+   var message='J’ai besoin d’aide. Voici ma position actuelle : '+mapLink;
+   var phone=contact.phone.replace(/[^+0-9]/g,'');
+   window.location.href='sms:'+phone+'?&body='+encodeURIComponent(message);
+   showSosStatus('Le SMS est préparé avec ta position. Vérifie le destinataire puis appuie sur Envoyer dans Messages.');
+  },function(error){showSosStatus(error.code===1?'Localisation refusée. Autorise la position ou utilise « Préparer un SMS ».':'Position introuvable pour le moment. Réessaie ou utilise « Préparer un SMS ».');},{enableHighAccuracy:true,timeout:12000,maximumAge:15000});
  }
  if(sosOpen&&sosDialog){
   renderSosContacts();
@@ -224,13 +244,14 @@ document.addEventListener('DOMContentLoaded',function(){
   sosClose.addEventListener('click',function(){sosDialog.hidden=true;sosOpen.focus();});
   sosDialog.addEventListener('click',function(e){if(e.target===sosDialog){sosDialog.hidden=true;sosOpen.focus();}});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sosDialog.hidden){sosDialog.hidden=true;sosOpen.focus();}});
-  document.getElementById('sosAddContact').addEventListener('click',function(){
-   var name=document.getElementById('sosContactName').value.trim(),phone=document.getElementById('sosContactPhone').value.trim();
-   if(!name||!phone){showSosStatus('Ajoute un nom et un numéro de téléphone.');return;}
-   if(!/^[+0-9 ()-]{7,30}$/.test(phone)){showSosStatus('Vérifie le numéro de téléphone.');return;}
-   if(sosContacts.length>=8){showSosStatus('Tu peux enregistrer jusqu’à 8 contacts.');return;}
+  document.getElementById('sosManageContacts').addEventListener('click',function(){sosDialog.hidden=true;showTab('settings');});
+  document.getElementById('settingsSosAddContact').addEventListener('click',function(){
+   var name=document.getElementById('settingsSosContactName').value.trim(),phone=document.getElementById('settingsSosContactPhone').value.trim();
+   if(!name||!phone){showSettingsSosStatus('Ajoute un nom et un numéro de téléphone.');return;}
+   if(!/^[+0-9 ()-]{7,30}$/.test(phone)){showSettingsSosStatus('Vérifie le numéro de téléphone.');return;}
+   if(sosContacts.length>=8){showSettingsSosStatus('Tu peux enregistrer jusqu’à 8 contacts.');return;}
    sosContacts.push({name:name,phone:phone});
-   if(saveSosContacts()){document.getElementById('sosContactName').value='';document.getElementById('sosContactPhone').value='';renderSosContacts();showSosStatus('Contact enregistré sur cet appareil.');}
+   if(saveSosContacts()){document.getElementById('settingsSosContactName').value='';document.getElementById('settingsSosContactPhone').value='';renderSosContacts();showSettingsSosStatus('Contact enregistré sur cet appareil.');}
   });
  }
  document.querySelectorAll('[data-tab]').forEach(function(b){b.addEventListener('click',function(){showTab(b.getAttribute('data-tab'));});});
