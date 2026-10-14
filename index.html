@@ -382,28 +382,35 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
    point.marker.on('click',function(){selectPoint(point);});
    clusterGroup.addLayer(point.marker);allMarkers.push(point);
  }
- async function geocodePoint(name,address){
+ async function geocodePoint(name,address,description){
    try{
      var response=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='+encodeURIComponent(address),{headers:{'Accept':'application/json'}});
      if(!response.ok)return false;
      var results=await response.json();if(!results.length)return false;
-     addPoint(name,address,Number(results[0].lat),Number(results[0].lon));return true;
+     var r=results[0],lat=Number(r.lat),lon=Number(r.lon);
+     var duplicate=allMarkers.some(function(p){return p.name.toLocaleLowerCase()===name.toLocaleLowerCase()&&Math.abs(p.lat-lat)<0.003&&Math.abs(p.lon-lon)<0.003;});
+     if(!duplicate)addPoint(name,r.display_name||address,lat,lon,description,'catalogue');
+     return true;
    }catch(e){return false;}
  }
  function delay(ms){return new Promise(function(resolve){setTimeout(resolve,ms);});}
  async function loadSavedAddresses(){
-   var cards=Array.from(document.querySelectorAll('#places .card'));
+   var cards=Array.from(document.querySelectorAll('#places .card')),seenPlaces={};
    var places=cards.map(function(card){
-     var h=card.querySelector('h3'), p=Array.from(card.querySelectorAll('p')).find(function(x){return /^Adresse\s*:/i.test(x.textContent.trim());});
+     var h=card.querySelector('h3'),ps=Array.from(card.querySelectorAll('p'));
+     var p=ps.find(function(x){return /^Adresse\s*:/i.test(x.textContent.trim());});
      if(!h||!p)return null;
-     var address=p.textContent.replace(/^Adresse\s*:\s*/i,'').trim();
-     return address?{name:h.textContent.trim(),address:address}:null;
+     var name=h.textContent.trim(),address=p.textContent.replace(/^Adresse\s*:\s*/i,'').trim();
+     if(!address)return null;
+     var description=ps.map(function(x){return x.textContent.trim();}).filter(function(t){return t&&!/^Adresse\s*:/i.test(t)&&!/^Téléphone\s*:/i.test(t)&&!/^Source\s*:/i.test(t);})[0]||'';
+     var key=(name+'|'+address).toLocaleLowerCase();if(seenPlaces[key])return null;seenPlaces[key]=true;
+     return {name:name,address:address,description:description};
    }).filter(Boolean);
    var added=0,failed=0;
    if(!places.length){setStatus('Aucune fiche avec adresse à géolocaliser.');return;}
    setStatus('Préparation de '+places.length+' adresses… Les points apparaissent progressivement. Garde la page ouverte quelques instants.');
    for(var i=0;i<places.length;i++){
-     var ok=await geocodePoint(places[i].name,places[i].address);
+     var ok=await geocodePoint(places[i].name,places[i].address,places[i].description);
      if(ok)added++;else failed++;
      setStatus('Géolocalisation des lieux : '+(i+1)+' / '+places.length+' fiches traitées · '+added+' points ajoutés'+(failed?' · '+failed+' adresses introuvables':'')+'.');
      if(i<places.length-1)await delay(1100);
