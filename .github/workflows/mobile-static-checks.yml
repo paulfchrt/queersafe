@@ -1,0 +1,29 @@
+name: QueerSafe mobile static checks
+on:
+  push:
+    paths:
+      - 'mobile/**'
+      - 'supabase/**'
+      - '.github/workflows/mobile-static-checks.yml'
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'supabase/**'
+      - '.github/workflows/mobile-static-checks.yml'
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package.json
+      - run: npm install --package-lock-only --ignore-scripts
+      - run: npm install --ignore-scripts
+      - run: npx expo install --check
+      - run: npx tsc --noEmit
