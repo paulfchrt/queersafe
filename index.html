@@ -416,11 +416,11 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
  }
  async function exploreOsmArea(){
    if(!map||osmLoading)return;
-   if(map.getZoom()<8){setStatus('Zoome sur une ville ou un quartier (niveau 8 ou plus), puis lance la recherche. Une recherche mondiale en une seule fois serait trop vaste.');return;}
+   if(map.getZoom()<9){setStatus('Zoom automatique sur la zone pour chercher les lieux à proximité…');map.setZoom(10);setTimeout(function(){exploreOsmArea();},900);return;}
    var b=map.getBounds(),bbox=[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()].join(',');
    if(osmLoaded[bbox]){setStatus('Cette zone a déjà été interrogée. Zoome ou déplace la carte pour explorer une autre zone.');return;}
    osmLoading=true;setStatus('Recherche de lieux LGBTQ+ cartographiés dans cette zone…');
-   var query='[out:json][timeout:25];(nwr[~"^(name|description|lgbtq|gay|queer|lesbian|transgender|access)"~"LGBTQ|LGBT|gay|queer|lesbian|transgender|trans-friendly|homosexual|pride",i]('+bbox+'););out center tags;';
+   var query='[out:json][timeout:25];(nwr[~"^(lgbtq|gay|queer|lesbian|transgender|gay_friendly|lgbt)"~".",i]('+bbox+');nwr[~"^(name|description|note|category)"~"LGBTQ|LGBT|gay|queer|lesbian|transgender|pride",i]('+bbox+'););out center tags;';
    try{
      var response=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','Accept':'application/json'},body:'data='+encodeURIComponent(query)});
      if(!response.ok)throw new Error('Service temporairement indisponible');
