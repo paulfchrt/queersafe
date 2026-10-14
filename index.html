@@ -422,9 +422,17 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
    osmLoading=true;setStatus('Recherche des lieux LGBTQ+ et des centres communautaires identifiés dans cette zone…');
    var query='[out:json][timeout:25];(nwr[~"^(lgbtq|gay|queer|lesbian|transgender|gay_friendly|lgbt|queer_friendly)"~".",i]('+bbox+');nwr[~"^(name|description|note|category|operator|club|community_centre)"~"LGBTQ|LGBT|gay|queer|lesbian|transgender|pride|rainbow|two-spirit|2SLGBTQ",i]('+bbox+');nwr[club~"gay|lgbt|queer|lesbian|transgender",i]('+bbox+');nwr[amenity~"community_centre|social_facility"][name~"LGBTQ|LGBT|gay|queer|lesbian|transgender|pride|rainbow",i]('+bbox+'););out center tags;';
    try{
-     var response=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','Accept':'application/json'},body:'data='+encodeURIComponent(query)});
-     if(!response.ok)throw new Error('Service temporairement indisponible');
-     var data=await response.json(),added=0,seen={};
+     var endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter'];
+     var data=null,lastError=null;
+     for(var ei=0;ei<endpoints.length;ei++){
+       try{
+         var response=await fetch(endpoints[ei],{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','Accept':'application/json'},body:'data='+encodeURIComponent(query)});
+         if(!response.ok)throw new Error('Service indisponible');
+         data=await response.json();break;
+       }catch(err){lastError=err;}
+     }
+     if(!data)throw lastError||new Error('Services cartographiques indisponibles');
+     var added=0,seen={};
      (data.elements||[]).forEach(function(el){
        var tags=el.tags||{},name=tags.name||tags.brand||tags.operator;
        if(!name)return;
