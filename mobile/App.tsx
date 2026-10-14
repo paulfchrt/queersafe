@@ -14,7 +14,8 @@ const lightPalette = { bg:'#FFF8FC', card:'#FFFFFF', text:'#2B1B2C', muted:'#6A5
 export default function App() {
   const system = useColorScheme();
   const [screen,setScreen] = useState<Screen>('Accueil');
-  const [contact,setContact] = useState<{name:string;phone:string}|null>(null);\n  const [contactOptions,setContactOptions] = useState<{id:string;name:string;phone:string}[]>([]);
+  const [contact,setContact] = useState<{name:string;phone:string}|null>(null);
+  const [contactOptions,setContactOptions] = useState<{id:string;name:string;phone:string}[]>([]);
   const [meetName,setMeetName] = useState('');
   const [meetPlace,setMeetPlace] = useState('');
   const [meetDate,setMeetDate] = useState('');
