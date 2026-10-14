@@ -50,43 +50,38 @@ body:before{content:"";display:block;height:5px;background:linear-gradient(90deg
 <section id="help" class="section"><div class="card"><h3>Avant une rencontre</h3><ul><li>Privilégie un lieu public pour un premier rendez-vous.</li><li>Organise ton propre moyen de transport et garde ton téléphone chargé.</li><li>Envoie ton plan à quelqu’un en qui tu as confiance.</li><li>Tu peux partir à tout moment, même sans justification.</li><li>Évite de partager ton adresse personnelle ou des informations sensibles trop tôt.</li></ul></div><div class="card"><h3>Si tu te sens en danger</h3><p>Éloigne-toi si tu peux le faire sans augmenter le risque, rejoins un lieu fréquenté et contacte une personne de confiance. En cas de danger immédiat, appelle le numéro d’urgence local. Au Canada et aux États-Unis, le 911 est le numéro d’urgence.</p><p>Pour un soutien LGBTQ+, privilégie les associations reconnues de ta région. Vérifie les coordonnées sur leur site officiel avant de te déplacer.</p></div><div class="card"><h3>Confidentialité</h3><p>Ne publie pas d’accusations nominatives ni d’informations permettant d’identifier quelqu’un sans procédure fiable et protections adaptées. Une future fonction de signalement devra inclure modération, consentement, sécurité et mécanisme de correction.</p></div></section>
 <footer class="footer">QueerSafe est un prototype indépendant. Il ne vérifie pas les lieux, ne collecte pas de signalements, ne suit pas ta position et ne contacte pas les secours. N’utilise pas cette version comme système d’alerte d’urgence.</footer>
 </main><script>
-(function(){
-'use strict';
-function byId(id){return document.getElementById(id);}
 function showTab(id){
  document.querySelectorAll('.section').forEach(function(s){s.classList.toggle('active',s.id===id);});
- document.querySelectorAll('[data-tab]').forEach(function(b){b.classList.toggle('active',b.dataset.tab===id);});
- try{window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}catch(e){window.scrollTo(0,0);}
+ document.querySelectorAll('[data-tab]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-tab')===id);});
+ window.scrollTo(0,0);
 }
-async function copyText(text){
- try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);alert('Message copié.');return;}}catch(e){}
- var t=document.createElement('textarea');t.value=text;t.setAttribute('readonly','');t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();var ok=false;try{ok=document.execCommand('copy');}catch(e){}t.remove();
- alert(ok?'Message copié.':'Copie automatique indisponible. Le message reste affiché : maintiens le doigt dessus pour le sélectionner et le copier.');
+function copyText(text){
+ var t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.focus();t.select();
+ var ok=false;try{ok=document.execCommand('copy');}catch(e){}
+ t.remove();alert(ok?'Message copié.':'Copie automatique impossible. Sélectionne le texte affiché pour le copier.');
 }
-async function share(text){if(navigator.share){try{await navigator.share({title:'QueerSafe',text:text});return;}catch(e){if(e&&e.name==='AbortError')return;}}await copyText(text);}
-function init(){
- document.addEventListener('click',function(e){
-  var b=e.target.closest('button');if(!b)return;
-  if(b.dataset.tab){showTab(b.dataset.tab);return;}
-  var a=b.dataset.action;
-  if(a==='tab-plan'){showTab('plan');return;}
-  if(a==='tab-checkin'){showTab('checkin');return;}
-  if(a==='tab-help'){showTab('help');return;}
-  if(b.id==='copyPlan'){var o=byId('planOutput');if(o&&!o.hidden)copyText(o.textContent);}
-  else if(b.id==='sharePlan'){var o2=byId('planOutput');if(o2&&!o2.hidden)share(o2.textContent);}
-  else if(b.id==='copyCheck')copyText(byId('checkMessage').value);
-  else if(b.id==='shareCheck')share(byId('checkMessage').value);
- });
- var form=byId('planForm');
+function shareText(text){
+ if(navigator.share){navigator.share({title:'QueerSafe',text:text}).catch(function(e){if(!e||e.name!=='AbortError')copyText(text);});}
+ else copyText(text);
+}
+document.addEventListener('DOMContentLoaded',function(){
+ document.querySelectorAll('[data-tab]').forEach(function(b){b.addEventListener('click',function(){showTab(b.getAttribute('data-tab'));});});
+ document.querySelectorAll('[data-action="tab-plan"]').forEach(function(b){b.addEventListener('click',function(){showTab('plan');});});
+ document.querySelectorAll('[data-action="tab-checkin"]').forEach(function(b){b.addEventListener('click',function(){showTab('checkin');});});
+ document.querySelectorAll('[data-action="tab-help"]').forEach(function(b){b.addEventListener('click',function(){showTab('help');});});
+ var form=document.getElementById('planForm');
  if(form)form.addEventListener('submit',function(e){
   e.preventDefault();
-  if(!byId('consent').checked){alert('Coche la case pour confirmer que tu enverras le message toi-même.');return;}
-  var v=function(id){return byId(id).value.trim();};
-  var lines=['QUEERSAFE · PLAN DE RENCONTRE','Date : '+v('date'),'Heure : '+v('time'),'Lieu : '+v('place),v('area')?'Quartier / ville : '+v('area'):'',v('nickname')?'Pseudo : '+v('nickname'):'',v('checkTime')?'Heure de check-in : '+v('checkTime'):'',v('trusted')?'Personne de confiance : '+v('trusted'):'',v('contact')?'Contact : '+v('contact'):'',v('codeword')?'Mot-code convenu : '+v('codeword'):'',v('exit')?'Plan de sortie : '+v('exit'):'',v('notes')?'Autres infos : '+v('notes'):'','Si je ne réponds pas à l’heure prévue, essaie de me contacter selon ce dont nous avons convenu.'];
-  byId('planOutput').textContent=lines.filter(Boolean).join('\n');byId('planOutput').hidden=false;byId('planActions').hidden=false;
+  var consent=document.getElementById('consent');
+  if(!consent.checked){alert('Coche la case pour confirmer que tu enverras le message toi-même.');return;}
+  function v(id){return document.getElementById(id).value.trim();}
+  var lines=['QUEERSAFE · PLAN DE RENCONTRE','Date : '+v('date'),'Heure : '+v('time'),'Lieu : '+v('place'),v('area')?'Quartier / ville : '+v('area'):'',v('nickname')?'Pseudo : '+v('nickname'):'',v('checkTime')?'Heure de check-in : '+v('checkTime'):'',v('trusted')?'Personne de confiance : '+v('trusted'):'',v('contact')?'Contact : '+v('contact'):'',v('codeword')?'Mot-code convenu : '+v('codeword'):'',v('exit')?'Plan de sortie : '+v('exit'):'',v('notes')?'Autres infos : '+v('notes'):'','Si je ne réponds pas à l’heure prévue, essaie de me contacter selon ce dont nous avons convenu.'];
+  var out=document.getElementById('planOutput');out.textContent=lines.filter(Boolean).join('\n');out.hidden=false;document.getElementById('planActions').hidden=false;
  });
- if('serviceWorker'in navigator&&location.protocol.indexOf('http')===0)window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){});});
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
+ var cp=document.getElementById('copyPlan');if(cp)cp.addEventListener('click',function(){copyText(document.getElementById('planOutput').textContent);});
+ var sp=document.getElementById('sharePlan');if(sp)sp.addEventListener('click',function(){shareText(document.getElementById('planOutput').textContent);});
+ var cc=document.getElementById('copyCheck');if(cc)cc.addEventListener('click',function(){copyText(document.getElementById('checkMessage').value);});
+ var sc=document.getElementById('shareCheck');if(sc)sc.addEventListener('click',function(){shareText(document.getElementById('checkMessage').value);});
+ if('serviceWorker' in navigator && location.protocol.indexOf('http')===0)navigator.serviceWorker.register('./sw.js').catch(function(){});
+});
 </script></body></html>
