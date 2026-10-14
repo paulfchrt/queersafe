@@ -1,0 +1,11 @@
+{
+  "name": "QueerSafe",
+  "short_name": "QueerSafe",
+  "description": "Préparer ses rencontres, partager un plan de sécurité et accéder à des ressources LGBTQ+.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#101827",
+  "lang": "fr"
+}
