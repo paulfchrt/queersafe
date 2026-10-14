@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from './src/lib/supabase';
 import { Alert, Linking, Platform, Pressable, SafeAreaView, ScrollView, Share, StyleSheet, Text, TextInput, View, useColorScheme } from 'react-native';
 import * as Contacts from 'expo-contacts';
 import * as Location from 'expo-location';
@@ -24,10 +26,52 @@ export default function App() {
   const [codeword,setCodeword] = useState('');
   const [emergencyNumber,setEmergencyNumber] = useState('');
   const [busy,setBusy] = useState(false);
+  const [session,setSession] = useState<Session|null>(null);
+  const [authEmail,setAuthEmail] = useState('');
+  const [authPassword,setAuthPassword] = useState('');
+  const [authMode,setAuthMode] = useState<'login'|'signup'>('signup');
+  const [authBusy,setAuthBusy] = useState(false);
   const dark = system !== 'light';
   const C = dark ? darkPalette : lightPalette;
 
   useEffect(()=>{ SecureStore.getItemAsync(KEY).then(raw=>{if(raw){try{setContact(JSON.parse(raw));}catch{}}}).catch(()=>{}); },[]);
+
+  useEffect(()=>{
+    let mounted = true;
+    supabase.auth.getSession().then(({data})=>{ if(mounted) setSession(data.session); }).catch(()=>{});
+    const {data:{subscription}} = supabase.auth.onAuthStateChange((_event,nextSession)=>setSession(nextSession));
+    return ()=>{ mounted=false; subscription.unsubscribe(); };
+  },[]);
+
+  async function submitAuth() {
+    const email = authEmail.trim().toLowerCase();
+    if(!email || !authPassword || authPassword.length < 8) {
+      Alert.alert('Informations manquantes','Saisis ton adresse e-mail et un mot de passe d’au moins 8 caractères.');
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      const result = authMode === 'signup'
+        ? await supabase.auth.signUp({email,password:authPassword})
+        : await supabase.auth.signInWithPassword({email,password:authPassword});
+      if(result.error) throw result.error;
+      if(authMode === 'signup' && !result.data.session) {
+        Alert.alert('Vérifie tes e-mails','Ton compte a été créé. Ouvre l’e-mail de confirmation envoyé par Supabase avant de te connecter.');
+      } else {
+        Alert.alert(authMode === 'signup'?'Compte créé':'Connexion réussie','Ton compte QueerSafe est connecté.');
+        setAuthPassword('');
+      }
+    } catch(error) {
+      const message = error instanceof Error ? error.message : 'Impossible de contacter Supabase. Réessaie plus tard.';
+      Alert.alert('Connexion impossible',message);
+    } finally { setAuthBusy(false); }
+  }
+
+  async function signOut() {
+    const {error} = await supabase.auth.signOut();
+    if(error) Alert.alert('Déconnexion impossible',error.message);
+    else Alert.alert('Déconnecté','Tu es déconnecté de ton compte QueerSafe.');
+  }
 
   async function chooseContact() {
     const permission = await Contacts.requestPermissionsAsync();
@@ -93,7 +137,7 @@ export default function App() {
     if(screen==='Lieux sûrs') return <>{card('Carte communautaire','Le répertoire en ligne et la carte ne sont pas encore connectés. Cette version ne collecte pas de lieux et ne prétend pas vérifier leur sécurité.')}{card('Ajouter un lieu de confiance','Les prochaines étapes incluent une proposition de lieu, une vérification par modération, des dates de mise à jour et un mécanisme de correction.')}{card('Règle QueerSafe','Ne publie pas l’adresse privée d’une personne ni d’informations qui pourraient l’exposer. Un lieu doit être vérifié avant d’être marqué comme recommandé.')}</>;
     if(screen==='Rencontre') return <>{card('Plan de rencontre','Renseigne les informations utiles, puis partage le plan avec une personne de confiance.')}{field('Pseudo (facultatif)',meetName,setMeetName,'Pseudo sur Grindr, Tinder…')}{field('Lieu prévu',meetPlace,setMeetPlace,'Adresse ou lieu public')}{field('Date',meetDate,setMeetDate,'Ex. 2026-10-20')}{field('Heure',meetTime,setMeetTime,'Ex. 19:30')}{field('Mot-code',codeword,setCodeword,'Phrase convenue pour demander de l’aide')}{card('Contact de confiance',contact?contact.name+' · '+contact.phone:'Aucun contact sélectionné.',button('Choisir dans mes contacts',chooseContact,'secondary'))}{button('Partager mon plan',makeMeetupMessage)}</>;
     if(screen==='SOS') return <>{card('Besoin d’aide maintenant ?','Si le danger est immédiat, contacte les services d’urgence locaux. QueerSafe ne transmet pas encore d’alerte à la communauté et ne peut pas garantir qu’une personne viendra.',<Text style={[styles.body,{color:C.muted}]}>Ton contact de confiance : {contact?contact.name+' · '+contact.phone:'aucun contact configuré'}</Text>)}{button('ENVOYER UN SMS SOS',()=>sendSOS('sms'),'danger')}{button('APPELER LES URGENCES',()=>sendSOS('call'),'danger')}{field('Numéro d’urgence local',emergencyNumber,setEmergencyNumber,'Vérifie le numéro de ton pays','phone-pad')}{text('Le SMS est préparé dans l’application Messages : tu gardes le contrôle et dois appuyer sur Envoyer. La position n’est demandée qu’au moment où tu déclenches le SOS.',styles.smallNote)}{button('Configurer mon contact',()=>setScreen('Profil'),'secondary')}</>;
-    return <>{card('Identité QueerSafe','Q+ · Couleurs Pride · Thème clair ou sombre automatique.')}{card('Contact de confiance',contact?contact.name+' · '+contact.phone:'Aucun contact enregistré.',button('Sélectionner dans le téléphone',chooseContact,'secondary'))}{contactOptions.length>0?card('Choisis un contact', 'Les contacts affichés proviennent du carnet d’adresses de ton téléphone.',<View style={{gap:8}}>{contactOptions.map(p=><Pressable key={p.id} onPress={()=>{const value={name:p.name,phone:p.phone};setContact(value);setContactOptions([]);SecureStore.setItemAsync(KEY,JSON.stringify(value)).catch(()=>{});Alert.alert('Contact enregistré',p.name+' a été ajouté comme contact de confiance.');}} style={[styles.button,{backgroundColor:C.field,borderColor:C.border}]}><Text style={{color:C.text,fontWeight:'700'}}>{p.name} · {p.phone}</Text></Pressable>)}</View>):null}{field('Nom du contact (saisie manuelle)',trustedName,setTrustedName,'Prénom ou surnom')}{field('Numéro du contact (saisie manuelle)',contact?.phone||'',v=>setContact({name:trustedName||'Contact de confiance',phone:v}),'Numéro avec indicatif pays','phone-pad')}{button('Enregistrer le contact',saveManualContact)}{card('Vie privée','Les informations du contact sont conservées localement sur cet appareil. Aucune alerte communautaire n’est active dans cette première version.')}{card('Urgences','Saisis et vérifie le numéro d’urgence local avant d’appeler. Aucun numéro universel n’est présumé.')}</>;
+    return <>{card('Compte QueerSafe',session?('Connecté : '+(session.user.email||'compte utilisateur')):'Crée un compte ou connecte-toi pour utiliser les futures fonctions communautaires.',session?button('Se déconnecter',signOut,'secondary'):<>{field('Adresse e-mail',authEmail,setAuthEmail,'toi@exemple.com','email')}{field('Mot de passe',authPassword,setAuthPassword,'8 caractères minimum','default')}{button(authBusy?'Patiente…':authMode==='signup'?'Créer mon compte':'Me connecter',submitAuth,authBusy?'secondary':'primary')}{button(authMode==='signup'?'J’ai déjà un compte · Connexion':'Créer un compte',()=>setAuthMode(authMode==='signup'?'login':'signup'),'secondary')}</>)}{card('Identité QueerSafe','Q+ · Couleurs Pride · Thème clair ou sombre automatique.')}{card('Contact de confiance',contact?contact.name+' · '+contact.phone:'Aucun contact enregistré.',button('Sélectionner dans le téléphone',chooseContact,'secondary'))}{contactOptions.length>0?card('Choisis un contact', 'Les contacts affichés proviennent du carnet d’adresses de ton téléphone.',<View style={{gap:8}}>{contactOptions.map(p=><Pressable key={p.id} onPress={()=>{const value={name:p.name,phone:p.phone};setContact(value);setContactOptions([]);SecureStore.setItemAsync(KEY,JSON.stringify(value)).catch(()=>{});Alert.alert('Contact enregistré',p.name+' a été ajouté comme contact de confiance.');}} style={[styles.button,{backgroundColor:C.field,borderColor:C.border}]}><Text style={{color:C.text,fontWeight:'700'}}>{p.name} · {p.phone}</Text></Pressable>)}</View>):null}{field('Nom du contact (saisie manuelle)',trustedName,setTrustedName,'Prénom ou surnom')}{field('Numéro du contact (saisie manuelle)',contact?.phone||'',v=>setContact({name:trustedName||'Contact de confiance',phone:v}),'Numéro avec indicatif pays','phone-pad')}{button('Enregistrer le contact',saveManualContact)}{card('Vie privée','Les informations du contact sont conservées localement sur cet appareil. Aucune alerte communautaire n’est active dans cette première version.')}{card('Urgences','Saisis et vérifie le numéro d’urgence local avant d’appeler. Aucun numéro universel n’est présumé.')}</>;
   }
 
   return <SafeAreaView style={[styles.safe,{backgroundColor:C.bg}]}><StatusBar style={dark?'light':'dark'} /><View style={styles.prideBar}>{PRIDE.map(color=><View key={color} style={{flex:1,backgroundColor:color}} />)}</View><View style={styles.header}><View style={styles.logo}>{PRIDE.map((color,i)=><View key={color} style={{position:"absolute",top:0,bottom:0,left:((i*100/PRIDE.length)+"%") as `${number}%`,width:((100/PRIDE.length)+"%") as `${number}%`,backgroundColor:color}} />)}<Text style={styles.logoText}>Q+</Text></View><View><Text style={[styles.brand,{color:C.text}]}>QueerSafe</Text><Text style={[styles.tagline,{color:C.muted}]}>Des rencontres plus sûres, ensemble.</Text></View></View><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"><Text style={[styles.eyebrow,{color:'#D98ABF'}]}>{screen.toUpperCase()}</Text>{renderScreen()}<Text style={[styles.disclaimer,{color:C.muted}]}>Prototype en développement · Le SOS ne remplace pas les services d’urgence.</Text></ScrollView><View style={[styles.nav,{backgroundColor:C.card,borderColor:C.border}]}>{(['Accueil','Lieux sûrs','Rencontre','SOS','Profil'] as Screen[]).map((s,i)=><Pressable key={s} onPress={()=>setScreen(s)} accessibilityRole="button" accessibilityState={{selected:screen===s}} style={styles.navItem}><Text style={{fontSize:19}}>{['⌂','⌖','♡','!','☻'][i]}</Text><Text numberOfLines={1} style={{fontSize:10,fontWeight:screen===s?'800':'500',color:screen===s?'#D98ABF':C.muted}}>{s}</Text></Pressable>)}</View></SafeAreaView>;
