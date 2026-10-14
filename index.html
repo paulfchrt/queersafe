@@ -386,17 +386,20 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
      var address=p.textContent.replace(/^Adresse\s*:\s*/i,'').trim();
      return address?{name:h.textContent.trim(),address:address}:null;
    }).filter(Boolean);
-   var added=0;
-   setStatus('Chargement des points sur la carte…');
+   var added=0,failed=0;
+   if(!places.length){setStatus('Aucune fiche avec adresse à géolocaliser.');return;}
+   setStatus('Préparation de '+places.length+' adresses… Les points apparaissent progressivement. Garde la page ouverte quelques instants.');
    for(var i=0;i<places.length;i++){
-     var ok=await geocodePoint(places[i].name,places[i].address);if(ok)added++;
+     var ok=await geocodePoint(places[i].name,places[i].address);
+     if(ok)added++;else failed++;
+     setStatus('Géolocalisation des lieux : '+(i+1)+' / '+places.length+' fiches traitées · '+added+' points ajoutés'+(failed?' · '+failed+' adresses introuvables':'')+'.');
      if(i<places.length-1)await delay(1100);
    }
    if(added){
      if(allMarkers.length>1)map.fitBounds(clusterGroup.getBounds().pad(.12),{maxZoom:5});
      else if(allMarkers.length===1)map.setView(clusterGroup.getBounds().getCenter(),14);
-     setStatus(added+' lieux avec adresse affichés directement sur la carte. Les points sont regroupés quand on dézoome. Les fiches sans adresse ne sont pas épinglées.');
-   }else setStatus('Aucun point n’a pu être chargé. Réessaie plus tard ou utilise la recherche d’adresse.');
+     setStatus('Terminé : '+added+' lieux affichés sur la carte'+(failed?' ; '+failed+' adresses n’ont pas pu être géolocalisées':'')+'. Les points sont regroupés quand on dézoome. Les fiches sans adresse ne sont pas épinglées.');
+   }else setStatus('Aucun point n’a pu être géolocalisé. Le service de recherche peut limiter les requêtes : réessaie plus tard.');
  }
  async function locateAddress(address,name){
    if(!address.trim()){setStatus('Saisis une adresse.');return;}
