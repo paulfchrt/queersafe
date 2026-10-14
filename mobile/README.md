@@ -18,14 +18,16 @@ Application mobile iOS/Android en React Native + Expo. Elle est séparée du pro
 - Répertoire vide tant qu'aucun lieu réel n'a été vérifié.
 - Schéma SQL initial avec Row Level Security et checklist de sécurité.
 
-## Configuration cloud (à faire par le propriétaire)
-1. Créer un projet Supabase.
-2. Exécuter `../supabase/migrations/202610140001_initial_schema.sql` dans le SQL Editor.
-3. Copier `.env.example` vers `.env` et renseigner l'URL du projet et la clé publishable/anon.
-4. Ne jamais ajouter de clé `service_role` dans l'app ou dans Git.
-5. Tester les politiques RLS avec deux comptes et un visiteur non connecté avant toute activation.
+## Configuration cloud et état réel
 
-Le backend n'est pas encore connecté au code mobile : aucune alerte communautaire n'est envoyée et aucune donnée n'est synchronisée. La migration garde les alertes privées par défaut. Une fonction serveur dédiée, des notifications push, une procédure de modération et des tests de sécurité sont nécessaires avant d'activer les alertes de proximité.
+- Le client Supabase et les écrans d'inscription/connexion sont présents dans le code mobile.
+- Le répertoire lit uniquement les lignes `safe_places` dont `status = published` et `verified = true`.
+- Les migrations SQL définissent les tables et activent RLS, mais les politiques doivent encore être testées avec deux comptes et une session anonyme.
+- Aucun code mobile ne soumet actuellement de lieux, de signalements ou d'alertes communautaires.
+- Aucune notification push, console de modération ou expiration automatisée des alertes n'est configurée.
+- La migration garde volontairement les alertes privées. Ne pas les ouvrir à la communauté avant d'avoir conçu et testé un flux serveur sécurisé.
+
+Avant la bêta, appliquer la migration au projet Supabase, confirmer que le client mobile pointe vers le bon projet, tester l'inscription/confirmation e-mail/connexion, puis valider les politiques RLS. Ne jamais ajouter une clé `service_role` dans l'app ou dans Git.
 
 ## Publication
 Aucun binaire signé n'est généré par ce dépôt. La publication sur App Store / Google Play exige une build, les comptes développeur requis, une politique de confidentialité, des tests et la validation des stores.
