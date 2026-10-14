@@ -419,8 +419,8 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
    if(map.getZoom()<9){setStatus('Zoom automatique sur la zone pour chercher les lieux à proximité…');map.setZoom(10);setTimeout(function(){exploreOsmArea();},900);return;}
    var b=map.getBounds(),bbox=[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()].join(',');
    if(osmLoaded[bbox]){setStatus('Cette zone a déjà été interrogée. Zoome ou déplace la carte pour explorer une autre zone.');return;}
-   osmLoading=true;setStatus('Recherche de lieux LGBTQ+ cartographiés dans cette zone…');
-   var query='[out:json][timeout:25];(nwr[~"^(lgbtq|gay|queer|lesbian|transgender|gay_friendly|lgbt)"~".",i]('+bbox+');nwr[~"^(name|description|note|category)"~"LGBTQ|LGBT|gay|queer|lesbian|transgender|pride",i]('+bbox+'););out center tags;';
+   osmLoading=true;setStatus('Recherche des lieux LGBTQ+ et des centres communautaires identifiés dans cette zone…');
+   var query='[out:json][timeout:25];(nwr[~"^(lgbtq|gay|queer|lesbian|transgender|gay_friendly|lgbt|queer_friendly)"~".",i]('+bbox+');nwr[~"^(name|description|note|category|operator|club|community_centre)"~"LGBTQ|LGBT|gay|queer|lesbian|transgender|pride|rainbow|two-spirit|2SLGBTQ",i]('+bbox+');nwr[club~"gay|lgbt|queer|lesbian|transgender",i]('+bbox+');nwr[amenity~"community_centre|social_facility"][name~"LGBTQ|LGBT|gay|queer|lesbian|transgender|pride|rainbow",i]('+bbox+'););out center tags;';
    try{
      var response=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','Accept':'application/json'},body:'data='+encodeURIComponent(query)});
      if(!response.ok)throw new Error('Service temporairement indisponible');
@@ -439,7 +439,7 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
        addPoint(name,address,lat,lon,description,key);seen[key]=true;osmLoaded['id:'+key]=true;added++;
      });
      osmLoaded[bbox]=true;
-     setStatus(added?'Recherche terminée : '+added+' lieux supplémentaires trouvés dans cette zone via OpenStreetMap. Les données peuvent être incomplètes ; vérifie l’activité et l’accueil LGBTQ+ avant de t’y rendre.':'Aucun nouveau lieu correspondant aux balises LGBTQ+ n’a été trouvé ici. La base cartographique peut être incomplète.');
+     setStatus(added?'Recherche terminée : '+added+' lieux supplémentaires trouvés dans cette zone via OpenStreetMap. Ce sont des résultats cartographiques, pas une certification de sécurité ; vérifie l’activité et l’accueil LGBTQ+ avant de t’y rendre.':'Aucun nouveau lieu LGBTQ+ explicitement identifié dans OpenStreetMap pour cette zone. Cela ne signifie pas qu’il n’y en a aucun : le catalogue doit être enrichi avec des sources locales.');
    }catch(e){setStatus('Recherche cartographique momentanément indisponible. Réessaie plus tard ou utilise la recherche par adresse.');}
    finally{osmLoading=false;}
  }
