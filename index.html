@@ -43,6 +43,19 @@ body:before{content:"";display:block;height:5px;background:linear-gradient(90deg
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel);color:var(--text)}
 @media(max-width:480px){#safeMap{height:330px}.map-tools{grid-template-columns:1fr}}
 
+
+/* SOS panel: direct access, clear limits, no false automatic-alert claim */
+.sos-fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:20;border:2px solid #fff;border-radius:999px;padding:13px 18px;background:#c62845;color:#fff;font-weight:850;box-shadow:0 5px 22px #0005;letter-spacing:.02em}
+.sos-fab:focus-visible,.sos-close:focus-visible{outline:3px solid var(--accent2);outline-offset:3px}
+.sos-overlay{position:fixed;inset:0;z-index:30;background:#120d18d9;display:flex;align-items:flex-end;justify-content:center;padding:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.sos-overlay[hidden]{display:none}
+.sos-panel{width:min(100%,520px);max-height:88vh;overflow:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 15px 50px #0007}
+.sos-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sos-head h2{margin:0;font-size:24px}
+.sos-close{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:8px 12px}
+.sos-call{display:block;text-align:center;background:#c62845;color:white;border-radius:14px;padding:15px;margin:14px 0;text-decoration:none;font-weight:850;font-size:19px}
+.sos-panel .field{margin:10px 0}
+.sos-panel .notice{margin:12px 0}
 /* Carte : repères visibles, lisibles et regroupés à petite échelle */
 #safeMap{height:470px;background:#e9edf2}
 .qs-pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#b83d83;border:3px solid #fff;box-shadow:0 2px 9px #211d2766;display:flex;align-items:center;justify-content:center}
@@ -143,6 +156,21 @@ body:before{content:"";display:block;height:5px;background:linear-gradient(90deg
 <p class="notice"><strong>Important :</strong> cette section internationale est un index de ressources, pas une liste de lieux tous vérifiés par QueerSafe. Les organismes officiels sont prioritaires. Les annuaires tiers ne servent que de pistes à confirmer. Les lois, risques, horaires et conditions d’accès varient selon les villes et les personnes.</p>
 <p class="hint">Méthode de sélection : priorité aux sites officiels des organismes, municipalités et associations ; source et date à conserver pour chaque fiche. Pour les pays où les personnes LGBTQ+ sont criminalisées ou exposées à des risques, ne pas publier de lieux sensibles sans évaluation de sécurité et consentement de l’organisme.</p></article></section>
 <section id="help" class="section"><div class="card"><h3>Avant une rencontre</h3><ul><li>Privilégie un lieu public pour un premier rendez-vous.</li><li>Organise ton propre moyen de transport et garde ton téléphone chargé.</li><li>Envoie ton plan à quelqu’un en qui tu as confiance.</li><li>Tu peux partir à tout moment, même sans justification.</li><li>Évite de partager ton adresse personnelle ou des informations sensibles trop tôt.</li></ul></div><div class="card"><h3>Si tu te sens en danger</h3><p>Éloigne-toi si tu peux le faire sans augmenter le risque, rejoins un lieu fréquenté et contacte une personne de confiance. En cas de danger immédiat, appelle le numéro d’urgence local. Au Canada et aux États-Unis, le 911 est le numéro d’urgence.</p><p>Pour un soutien LGBTQ+, privilégie les associations reconnues de ta région. Vérifie les coordonnées sur leur site officiel avant de te déplacer.</p></div><div class="card"><h3>Confidentialité</h3><p>Ne publie pas d’accusations nominatives ni d’informations permettant d’identifier quelqu’un sans procédure fiable et protections adaptées. Une future fonction de signalement devra inclure modération, consentement, sécurité et mécanisme de correction.</p></div></section>
+
+<button type="button" class="sos-fab" id="sosOpen" aria-haspopup="dialog" aria-controls="sosDialog">SOS</button>
+<div class="sos-overlay" id="sosDialog" hidden>
+ <section class="sos-panel" role="dialog" aria-modal="true" aria-labelledby="sosTitle">
+  <div class="sos-head"><h2 id="sosTitle">Besoin d’aide ?</h2><button type="button" class="sos-close" id="sosClose" aria-label="Fermer le panneau SOS">Fermer ✕</button></div>
+  <p>Si tu es en danger immédiat, éloigne-toi si possible et appelle les secours. Au Canada et aux États-Unis, compose le 911. Ailleurs, utilise le numéro d’urgence local.</p>
+  <a class="sos-call" href="tel:911" id="sosCall">📞 Appeler le 911</a>
+  <p class="hint">Le bouton ouvre l’appel téléphonique. QueerSafe ne transmet pas automatiquement ta position et ne prévient pas les secours.</p>
+  <div class="notice"><strong>Contacter une personne de confiance</strong><br>Tu peux préparer un message avec ta position si tu choisis de la partager. Aucun message n’est envoyé sans ton action.</div>
+  <div class="field"><label for="sosContact">Téléphone de la personne de confiance (facultatif)</label><input id="sosContact" type="tel" autocomplete="tel" placeholder="+1 416 555 0123"></div>
+  <div class="row"><button class="btn secondary" type="button" id="sosLocation">Préparer un message avec ma position</button><button class="btn secondary" type="button" id="sosShare">Partager le message</button></div>
+  <p id="sosStatus" class="result" role="status" aria-live="polite" hidden></p>
+  <p class="hint">Le partage de position nécessite ton autorisation. Si tu ne peux pas parler ou utiliser ton téléphone en sécurité, privilégie la méthode la moins risquée dans ta situation.</p>
+ </section>
+</div>
 <footer class="footer">QueerSafe est un prototype indépendant. Il ne vérifie pas les lieux, ne collecte pas de signalements, ne suit pas ta position et ne contacte pas les secours. N’utilise pas cette version comme système d’alerte d’urgence.</footer>
 </main><script>
 function showTab(id){
@@ -160,6 +188,32 @@ function shareText(text){
  else copyText(text);
 }
 document.addEventListener('DOMContentLoaded',function(){
+
+ var sosOpen=document.getElementById('sosOpen'),sosDialog=document.getElementById('sosDialog'),sosClose=document.getElementById('sosClose'),sosStatus=document.getElementById('sosStatus'),sosMessage='';
+ function showSosStatus(message){sosStatus.textContent=message;sosStatus.hidden=false;}
+ if(sosOpen&&sosDialog){
+  sosOpen.addEventListener('click',function(){sosDialog.hidden=false;sosClose.focus();});
+  sosClose.addEventListener('click',function(){sosDialog.hidden=true;sosOpen.focus();});
+  sosDialog.addEventListener('click',function(e){if(e.target===sosDialog){sosDialog.hidden=true;sosOpen.focus();}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sosDialog.hidden){sosDialog.hidden=true;sosOpen.focus();}});
+  document.getElementById('sosLocation').addEventListener('click',function(){
+   showSosStatus('Demande de position…');
+   if(!navigator.geolocation){sosMessage='J’ai besoin d’aide. Je ne peux pas partager ma position depuis ce téléphone.';showSosStatus(sosMessage);return;}
+   navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude.toFixed(6),lon=pos.coords.longitude.toFixed(6),url='https://maps.google.com/?q='+lat+','+lon;
+    sosMessage='J’ai besoin d’aide. Voici ma position : '+url+'. Appelle-moi dès que tu peux.';
+    showSosStatus('Message préparé avec ta position. Vérifie-le avant de le partager. Rien n’a été envoyé.');
+   },function(){sosMessage='J’ai besoin d’aide. Je ne peux pas partager ma position. Peux-tu m’appeler ?';showSosStatus('Position indisponible ou autorisation refusée. Un message sans position est prêt.');},{enableHighAccuracy:true,timeout:10000,maximumAge:30000});
+  });
+  document.getElementById('sosShare').addEventListener('click',function(){
+   if(!sosMessage)sosMessage='J’ai besoin d’aide. Peux-tu m’appeler dès que possible ?';
+   var phone=document.getElementById('sosContact').value.trim();
+   if(phone&&/^\+?[0-9 ()-]{7,20}$/.test(phone)){window.location.href='sms:'+phone+'?&body='+encodeURIComponent(sosMessage);return;}
+   if(navigator.share){navigator.share({title:'Message SOS QueerSafe',text:sosMessage}).catch(function(e){if(!e||e.name!=='AbortError')copyText(sosMessage);});}
+   else copyText(sosMessage);
+  });
+ }
+
  document.querySelectorAll('[data-tab]').forEach(function(b){b.addEventListener('click',function(){showTab(b.getAttribute('data-tab'));});});
  document.querySelectorAll('[data-action="tab-plan"]').forEach(function(b){b.addEventListener('click',function(){showTab('plan');});});
  document.querySelectorAll('[data-action="tab-checkin"]').forEach(function(b){b.addEventListener('click',function(){showTab('checkin');});});
