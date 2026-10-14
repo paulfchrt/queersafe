@@ -391,7 +391,7 @@ supabase.auth.onAuthStateChange((_event,session)=>{signOut.hidden=!session;signI
  }
  function delay(ms){return new Promise(function(resolve){setTimeout(resolve,ms);});}
  async function loadSavedAddresses(){
-   var cards=Array.from(document.querySelectorAll('#places .grid .card'));
+   var cards=Array.from(document.querySelectorAll('#places .card'));
    var places=cards.map(function(card){
      var h=card.querySelector('h3'), p=Array.from(card.querySelectorAll('p')).find(function(x){return /^Adresse\s*:/i.test(x.textContent.trim());});
      if(!h||!p)return null;
